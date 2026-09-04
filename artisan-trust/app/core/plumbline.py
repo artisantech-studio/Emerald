@@ -32,13 +32,13 @@ def append_entry(db: Session, payload: Dict[str, Any]) -> Dict[str, Any]:
     Atomically appends a block to the Merkle chain with row-level locking
     to guarantee strict linear ordering under concurrent execution.
     """
-    # 1. Lock the tail block to prevent race conditions during parent selection
+    # Lock table in EXCLUSIVE mode to guarantee strict linear ordering under concurrent execution
+    db.execute(text("LOCK TABLE merkle_ledger IN EXCLUSIVE MODE;"))
     tail_query = text("""
         SELECT current_hash 
         FROM merkle_ledger 
         ORDER BY id DESC 
-        LIMIT 1 
-        FOR UPDATE;
+        LIMIT 1;
     """)
     last_block = db.execute(tail_query).fetchone()
     parent_hash = last_block[0] if last_block else None

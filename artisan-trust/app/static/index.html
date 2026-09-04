@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artisan Trust-Link Gateway | Cryptographic Referral Ledger</title>
+  <meta name="description" content="Lightweight Cryptographic Referral Notary for African B2B Trade on WhatsApp">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="background-glow glow-1"></div>
+  <div class="background-glow glow-2"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Artisan Trust-Link</h1>
+          <span class="sub-title">Merkle Referral Gateway</span>
+        </div>
+      </div>
+
+      <div class="header-badges">
+        <div class="status-badge live" id="node-status-badge">
+          <span class="pulse-dot"></span>
+          <span class="status-text">Node Connected</span>
+        </div>
+        <div class="status-badge ledger" id="chain-status-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+          </svg>
+          <span id="total-blocks-count">0 Blocks</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="signer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="12" y1="18" x2="12" y2="12"/>
+          <line x1="9" y1="15" x2="15" y2="15"/>
+        </svg>
+        Sign Referral
+      </button>
+
+      <button class="tab-btn" data-tab="verifier">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        Settle Commission
+      </button>
+
+      <button class="tab-btn" data-tab="explorer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        Merkle Explorer
+      </button>
+
+      <button class="tab-btn" data-tab="auditor">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        Ledger Auditor
+      </button>
+    </nav>
+
+    <!-- Tab Contents -->
+    <main class="tab-container">
+      
+      <!-- TAB 1: REFERRAL SIGNER -->
+      <section class="tab-content active" id="tab-signer">
+        <div class="grid-2col">
+          <div class="card glass">
+            <div class="card-header">
+              <h2>Issue Signed Referral Packet</h2>
+              <p>Cryptographically anchors broker inquiry to WhatsApp referral payload.</p>
+            </div>
+            
+            <form id="sign-form" class="form-layout">
+              <div class="form-group">
+                <label for="broker_id">Broker UUID / ID</label>
+                <input type="text" id="broker_id" required value="brk_9824_nairobi_01" placeholder="e.g. broker-uuid-123">
+              </div>
+
+              <div class="form-group">
+                <label for="merchant_phone">Merchant WhatsApp Phone (E.164)</label>
+                <input type="text" id="merchant_phone" required value="254712345678" placeholder="e.g. 254712345678">
+              </div>
+
+              <div class="form-group">
+                <label for="wa_id">Client / Buyer WhatsApp ID</label>
+                <input type="text" id="wa_id" required value="client_wa_9901" placeholder="e.g. client_wa_9901">
+              </div>
+
+              <div class="form-group">
+                <label for="inquiry_text">Raw Inquiry Details</label>
+                <textarea id="inquiry_text" rows="3" required placeholder="Enter asset / transaction details...">Inquiry for 50 units solar power inverters (Model X500)</textarea>
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="btn-sign-submit">
+                <span class="btn-text">Sign & Anchor to Ledger</span>
+                <div class="spinner hidden"></div>
+              </button>
+            </form>
+          </div>
+
+          <!-- Sign Result Preview Card -->
+          <div class="card glass result-card hidden" id="sign-result-card">
+            <div class="card-header">
+              <span class="badge badge-success">✓ REFERRAL ISSUED</span>
+              <h3>Signed Attribution Token</h3>
+            </div>
+
+            <div class="result-body">
+              <div class="field-box">
+                <label>Attribution Token (SHA-256 HMAC)</label>
+                <div class="code-copy-row">
+                  <code id="res-signed-token">--</code>
+                  <button class="btn-icon" title="Copy Token" onclick="copyText('res-signed-token')">📋</button>
+                </div>
+              </div>
+
+              <div class="field-box">
+                <label>Merkle Block Anchored</label>
+                <div class="block-preview-box">
+                  <div class="block-preview-row"><span>Block #</span><strong id="res-block-id">--</strong></div>
+                  <div class="block-preview-row"><span>Parent Hash</span><code id="res-parent-hash">--</code></div>
+                  <div class="block-preview-row"><span>Block Hash</span><code id="res-current-hash">--</code></div>
+                </div>
+              </div>
+
+              <div class="field-box">
+                <label>WhatsApp Redirect Link</label>
+                <a href="#" target="_blank" class="btn btn-whatsapp" id="res-wa-link">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-1.157 4.228 4.228-1.157z"/>
+                  </svg>
+                  Open WhatsApp Chat Link
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: TOKEN VERIFIER & SETTLEMENT -->
+      <section class="tab-content" id="tab-verifier">
+        <div class="grid-2col">
+          <div class="card glass">
+            <div class="card-header">
+              <h2>Verify & Settle Commission</h2>
+              <p>Re-computes cryptographic proof and anchors settled state to ledger.</p>
+            </div>
+
+            <form id="verify-form" class="form-layout">
+              <div class="form-group">
+                <label for="v_token">Attribution Token</label>
+                <input type="text" id="v_token" required placeholder="Paste hex attribution token...">
+              </div>
+
+              <div class="form-group">
+                <label for="v_wa_id">Client WhatsApp ID</label>
+                <input type="text" id="v_wa_id" required placeholder="e.g. client_wa_9901">
+              </div>
+
+              <div class="form-group">
+                <label for="v_inquiry">Original Raw Inquiry Text</label>
+                <textarea id="v_inquiry" rows="3" required placeholder="Paste original inquiry text..."></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-accent" id="btn-verify-submit">
+                <span class="btn-text">Verify & Settle Ledger Block</span>
+                <div class="spinner hidden"></div>
+              </button>
+            </form>
+          </div>
+
+          <!-- Verify Result Card -->
+          <div class="card glass result-card hidden" id="verify-result-card">
+            <div class="card-header">
+              <span class="badge badge-settled" id="v-status-badge">✓ COMMISSION SETTLED</span>
+              <h3>Cryptographic Verification</h3>
+            </div>
+
+            <div class="result-body">
+              <div class="field-box">
+                <label>Token State</label>
+                <div class="verify-alert success">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <span>Cryptographic signature matched. Settlement block appended.</span>
+                </div>
+              </div>
+
+              <div class="field-box">
+                <label>Settlement Block Record</label>
+                <div class="block-preview-box">
+                  <div class="block-preview-row"><span>Block #</span><strong id="v-res-block-id">--</strong></div>
+                  <div class="block-preview-row"><span>Parent Hash</span><code id="v-res-parent-hash">--</code></div>
+                  <div class="block-preview-row"><span>Current Hash</span><code id="v-res-current-hash">--</code></div>
+                  <div class="block-preview-row"><span>Timestamp</span><span id="v-res-timestamp">--</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: MERKLE LEDGER EXPLORER -->
+      <section class="tab-content" id="tab-explorer">
+        <div class="card glass full-width">
+          <div class="card-header flex-row">
+            <div>
+              <h2>Live Merkle Ledger Chain</h2>
+              <p>Linear sequence of tamper-evident SHA-256 blocks stored in PostgreSQL.</p>
+            </div>
+            <button class="btn btn-secondary" onclick="loadLedgerBlocks()">
+              <span>🔄 Refresh Chain</span>
+            </button>
+          </div>
+
+          <div class="timeline-container" id="ledger-timeline">
+            <div class="loading-state">Loading blocks from Merkle chain...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: LEDGER AUDITOR -->
+      <section class="tab-content" id="tab-auditor">
+        <div class="card glass full-width">
+          <div class="card-header flex-row">
+            <div>
+              <h2>Cryptographic Plumbline Auditor</h2>
+              <p>Traverses the entire ledger from Genesis to Tail, recomputing SHA-256 hashes & parent continuity.</p>
+            </div>
+            <button class="btn btn-primary" id="btn-run-audit" onclick="runLedgerAudit()">
+              <span>⚡ Execute Full Audit</span>
+            </button>
+          </div>
+
+          <div class="audit-summary-box hidden" id="audit-summary-card">
+            <div class="audit-status-header" id="audit-status-header">
+              <span class="audit-icon">🛡️</span>
+              <div>
+                <h3 id="audit-title">Auditing...</h3>
+                <p id="audit-subtitle">Checking block continuity</p>
+              </div>
+            </div>
+
+            <div class="audit-log-terminal" id="audit-terminal">
+              <!-- Logs will be populated here -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- JS App -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,15 +1,19 @@
 import hashlib
+import os
 import urllib.parse
 from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 import json
 from app.api.middleware import verify_meta_hmac_signature
 
 from app.core.config import settings
 from app.core.database import SessionLocal
-from app.core.plumbline import append_entry, PlumblineIntegrityError
+from app.core.plumbline import append_entry, PlumblineIntegrityError, compute_hash
 
 router = APIRouter()
 
@@ -131,6 +135,84 @@ def verify_referral(packet: ReferralVerifyRequest, db: Session = Depends(get_db)
     }
 
 
+@router.get("/v1/ledger/blocks")
+def get_ledger_blocks(db: Session = Depends(get_db)):
+    """Fetches all blocks in the Merkle ledger for the frontend explorer."""
+    rows = db.execute(
+        text("""
+            SELECT id, parent_hash, transaction_payload, timestamp, current_hash 
+            FROM merkle_ledger 
+            ORDER BY id DESC 
+            LIMIT 100;
+        """)
+    ).fetchall()
+
+    blocks = []
+    for r in rows:
+        blocks.append({
+            "id": r.id,
+            "parent_hash": r.parent_hash,
+            "payload": r.transaction_payload,
+            "timestamp": r.timestamp.isoformat() if r.timestamp else None,
+            "current_hash": r.current_hash
+        })
+    return blocks
+
+
+@router.get("/v1/ledger/audit")
+def audit_ledger_endpoint(db: Session = Depends(get_db)):
+    """Executes full Merkle plumbline cryptographic audit and returns structured log."""
+    rows = db.execute(
+        text("""
+            SELECT id, parent_hash, transaction_payload, timestamp, current_hash 
+            FROM merkle_ledger 
+            ORDER BY id ASC;
+        """)
+    ).fetchall()
+
+    if not rows:
+        return {"total_blocks": 0, "is_valid": True, "details": []}
+
+    last_hash: Optional[str] = None
+    details = []
+    is_valid = True
+
+    for row in rows:
+        block_valid = True
+        err = None
+
+        if row.parent_hash != last_hash:
+            block_valid = False
+            is_valid = False
+            err = f"Parent mismatch! Expected {last_hash}, found {row.parent_hash}"
+
+        expected_hash = compute_hash(
+            row.parent_hash,
+            row.transaction_payload,
+            row.timestamp.isoformat() if hasattr(row.timestamp, "isoformat") else str(row.timestamp)
+        )
+
+        if row.current_hash != expected_hash:
+            block_valid = False
+            is_valid = False
+            err = f"Hash tamper detected! Expected {expected_hash}, recorded {row.current_hash}"
+
+        details.append({
+            "id": row.id,
+            "parent_hash": row.parent_hash,
+            "current_hash": row.current_hash,
+            "valid": block_valid,
+            "error": err
+        })
+        last_hash = row.current_hash
+
+    return {
+        "total_blocks": len(rows),
+        "is_valid": is_valid,
+        "details": details
+    }
+
+
 @router.get("/webhook")
 def whatsapp_webhook_handshake(
     hub_mode: Optional[str] = Query(None, alias="hub.mode"),
@@ -175,6 +257,7 @@ async def whatsapp_webhook_inbound(
 
     return {"status": "RECORDED", "merkle_block_id": block["id"]}
 
+
 from fastapi import FastAPI
 
 app = FastAPI(
@@ -183,4 +266,14 @@ app = FastAPI(
     description="Lightweight Cryptographic Referral Notary for African B2B Trade"
 )
 
+# Serve Web App UI
+static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+    @app.get("/", response_class=FileResponse)
+    def read_root():
+        return FileResponse(os.path.join(static_dir, "index.html"))
+
 app.include_router(router)
+
